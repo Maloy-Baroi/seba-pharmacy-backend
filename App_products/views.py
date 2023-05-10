@@ -89,6 +89,7 @@ class AllProductsAPIView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated, ]
     queryset = ProductModel.objects.all()
     serializer_class = ProductModelSerializer
+    pagination_class = LargeResultsSetPagination
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset().exclude(expiry_date__lte=datetime.today()).order_by('expiry_date')
