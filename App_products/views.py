@@ -6,6 +6,7 @@ from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from django.views.decorators.cache import cache_page
 
@@ -16,14 +17,26 @@ import json
 
 
 # Create your views here.
+class LargeResultsSetPagination(PageNumberPagination):
+    page_size = 1
+    page_size_query_param = 'page_size'
+    max_page_size = 3
+
+
 class MedicinesAPIView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated, ]
     queryset = ProductModel.objects.all()
     serializer_class = ProductModelSerializer
+    pagination_class = LargeResultsSetPagination
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset().exclude(expiry_date__lte=datetime.today()).filter(is_medicine=True).order_by(
             'expiry_date')
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -36,6 +49,31 @@ class ProductsAPIView(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset().exclude(expiry_date__lte=datetime.today()).filter(is_medicine=False).order_by(
             'expiry_date')
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProductsAPIView2(generics.ListCreateAPIView):
+    permission_classes = [permissions.IsAuthenticated, ]
+    queryset = ProductModel.objects.all()
+    serializer_class = ProductModelSerializer
+    pagination_class = LargeResultsSetPagination
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset().exclude(expiry_date__lte=datetime.today()).filter(is_medicine=False).order_by(
+            'expiry_date')
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 

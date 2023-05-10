@@ -5,6 +5,7 @@ app_name = "App_products"
 
 urlpatterns = [
     path('products-list/', ProductsAPIView.as_view(), name="products-list"),
+    path('products-list-2/', ProductsAPIView2.as_view(), name="products-list-2"),
     path('medicine-list/', MedicinesAPIView.as_view(), name="medicine-list"),
     path('all-products-list/', AllProductsAPIView.as_view(), name="all-products-list"),
     path('medicines-info/', MedicineDetailsListCreateAPIView.as_view(), name="medicine-info"),
